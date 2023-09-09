@@ -44,7 +44,8 @@ void get_paths(int argc, char **argv, char **input_path, char **output_path) {
 
                 break;
             default:
-                printf("?\n");
+                printf("Usage: %s [-i input] [-o output]\n", argv[0]);
+                exit(1);
         }
     }
 
