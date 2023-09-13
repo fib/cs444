@@ -1,4 +1,4 @@
-huffman_coding: huffman_coding.c freq.c
+huffman_coding: huffman_coding.c
 	gcc -g -o huffman_coding huffman_coding.c
 
 clean:
