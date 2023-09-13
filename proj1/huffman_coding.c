@@ -8,7 +8,12 @@
 
 #define ASCII_MAX 128
 
-void freq_sort(int *freq, char *chars, int size);
+struct pq_node {
+    char c;
+    int freq;
+} typedef pq_node;
+
+pq_node* freq_sort(int *freq, int size);
 void get_paths(int argc, char **argv, char **input_path, char **output_path);
 void save_arg(char **dest, char *src);
 
@@ -20,7 +25,6 @@ int main(int argc, char **argv)
 
     // frequencies[x] = frequency of ASCII character x (b10) in the input
     int frequencies[ASCII_MAX]  = { 0 };
-    int characters[ASCII_MAX]   = { 0 };
 
     get_paths(argc, argv, &input_path, &output_path);
 
@@ -43,7 +47,7 @@ int main(int argc, char **argv)
     }
 
     // sort characters by ascending frequency
-    freq_sort(frequencies, characters, ASCII_MAX);
+    pq_node *freq_pq_head = freq_sort(frequencies, ASCII_MAX);
 
     // TODO:
     // 1. build frequency PQ
@@ -58,20 +62,8 @@ int main(int argc, char **argv)
 }
 
 // sort the frequencies array and save the relevant character in
-// the corresponding index of `chars`
-// i.e. `freq[x]` = frequency of `chars[x]`
-void freq_sort(int *freq, char *chars, int size) {
-    int temp;
-    
-    for (int end = 0; end < size - 1; end++) {
-        for (int i = 0; i < size - end - 1; i++) {
-            if (freq[i] > freq[i+1]) {
-                temp = freq[i];
-                freq[i] = freq[i+1];
-                freq[i+1] = temp;
-            }
-        }
-    }
+pq_node* freq_sort(int *freq, int size) {
+    pq_node freq_pq[ASCII_MAX] = { 0 };
 }
 
 // process the command line options (or fall back to default values):
