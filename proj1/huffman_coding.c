@@ -135,11 +135,6 @@ freq_node* pq_push(freq_node* head, freq_node* new_node) {
     return head;
 }
 
-// a comparison function comparing the frequencies of 2 pq nodes
-int cmp_freq_nodes(const void* a, const void* b) {
-    return ((freq_node*)a)->freq - ((freq_node*)b)->freq;
-}
-
 // process the command line options (or fall back to default values):
 //      -i <path>: input path 
 //      -o <path>: output path 
@@ -151,11 +146,11 @@ void get_paths(int argc, char **argv, char *input_path, char *output_path) {
 
         switch (opt) {
             case 'i':
-                save_arg(input_path, optarg);
+                strcpy(input_path, optarg);
                 break;
 
             case 'o':
-                save_arg(output_path, optarg);
+                strcpy(output_path, optarg);
                 break;
 
             default:
@@ -167,14 +162,9 @@ void get_paths(int argc, char **argv, char *input_path, char *output_path) {
 
     // use default values if no input
     if (input_path[0] == 0) {
-        save_arg(input_path, DEFAULT_IN);
+        strcpy(input_path, DEFAULT_IN);
     }
     if (output_path[0] == 0) {
-        save_arg(output_path, DEFAULT_OUT);
+        strcpy(output_path, DEFAULT_OUT);
     }
-}
-
-// helper function for allocating memory for strings
-void save_arg(char *dest, char *src) {
-    strcpy(dest, src);
 }
