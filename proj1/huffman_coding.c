@@ -50,24 +50,12 @@ int main(int argc, char **argv)
         frequencies[ch].val = ch;
         frequencies[ch].freq++;
     } while (ch != EOF);
-    
-    int count = 0;
 
-    // move characters with non-zero frequency to the front of the array
-    for (int i = 0; i < ASCII_MAX; i++) {
-        if (frequencies[i].freq != 0) {
-            frequencies[count++] = frequencies[i];
-        }
-    }
-
-    // any elements past this index are to be ignored
-    // this is treated as the new array size
-    int number_of_unique_characters = count;
-    
     freq_node* head = NULL;
 
-    for (int i = 0; i < number_of_unique_characters; i++) {
-        head = pq_push(head, &frequencies[i]);
+    // push all frequencies into pq
+    for (int i = 0; i < ASCII_MAX; i++) {
+        if (frequencies[i].val != 0) head = pq_push(head, &frequencies[i]);
     }
 
     freq_node *curr = head;
