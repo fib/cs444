@@ -21,18 +21,18 @@ struct freq_node {
 void pq_pop(freq_node** head, freq_node** pop);
 freq_node* pq_push(freq_node* head, freq_node* new_node);
 int cmp_freq_nodes(const void* a, const void* b);
-void get_paths(int argc, char **argv, char **input_path, char **output_path);
-void save_arg(char **dest, char *src);
+void get_paths(int argc, char **argv, char *input_path, char *output_path);
+void save_arg(char *dest, char *src);
 
 
 int main(int argc, char **argv)
 {
-    char *input_path = NULL, *output_path = NULL;
+    char input_path[128] = { 0 }, output_path[128] = { 0 };
 
     // frequencies[x] = {val: x, freq: <frequency>}
     freq_node frequencies[ASCII_MAX] = { 0 };
 
-    get_paths(argc, argv, &input_path, &output_path);
+    get_paths(argc, argv, input_path, output_path);
 
     FILE *input = fopen(input_path, "r");
 
@@ -73,16 +73,10 @@ int main(int argc, char **argv)
     freq_node *curr = head;
     freq_node *temp;
 
-    // while (curr != NULL) {
-    //     pq_pop(&curr, &temp);
-    //     printf("%c: %d\n", temp->val, temp->freq);
-    // }
-
-    printf("%p, %p\n", input_path, output_path);
-    printf("%s, %s\n", input_path, output_path);
-    // // cleanup
-    // free(input_path);
-    // free(output_path);
+    while (curr != NULL) {
+        pq_pop(&curr, &temp);
+        printf("%c: %d\n", temp->val, temp->freq);
+    }
 
     return 0;
 }
@@ -149,7 +143,7 @@ int cmp_freq_nodes(const void* a, const void* b) {
 // process the command line options (or fall back to default values):
 //      -i <path>: input path 
 //      -o <path>: output path 
-void get_paths(int argc, char **argv, char **input_path, char **output_path) {
+void get_paths(int argc, char **argv, char *input_path, char *output_path) {
     int opt;
 
     // check if input/output paths are given
@@ -172,17 +166,15 @@ void get_paths(int argc, char **argv, char **input_path, char **output_path) {
     }
 
     // use default values if no input
-    if (*input_path == NULL) {
+    if (input_path[0] == 0) {
         save_arg(input_path, DEFAULT_IN);
     }
-    if (*output_path == NULL) {
+    if (output_path[0] == 0) {
         save_arg(output_path, DEFAULT_OUT);
     }
-    printf("%p, %p\n", *input_path, *output_path);
 }
 
 // helper function for allocating memory for strings
-void save_arg(char **dest, char *src) {
-    *dest = (char*)malloc(sizeof(char) * strlen(src));
-    strcpy(*dest, src);
+void save_arg(char *dest, char *src) {
+    strcpy(dest, src);
 }
