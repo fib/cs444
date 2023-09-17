@@ -8,12 +8,19 @@
 
 #define ASCII_MAX 128
 
-struct pq_node {
-    char c;
+struct freq_node {
+    char val;
     int freq;
-} typedef pq_node;
+    struct freq_node* prev;
+    struct freq_node* next;
+    struct freq_node* left; 
+    struct freq_node* right; 
+    struct freq_node* parent;
+} typedef freq_node;
 
-pq_node* freq_sort(int *freq, int size);
+void pq_pop(freq_node** head, freq_node** pop);
+freq_node* pq_push(freq_node* head, freq_node* new_node);
+int cmp_freq_nodes(const void* a, const void* b);
 void get_paths(int argc, char **argv, char **input_path, char **output_path);
 void save_arg(char **dest, char *src);
 
@@ -21,10 +28,9 @@ void save_arg(char **dest, char *src);
 int main(int argc, char **argv)
 {
     char *input_path = NULL, *output_path = NULL;
-    char ch;
 
-    // frequencies[x] = frequency of ASCII character x (b10) in the input
-    int frequencies[ASCII_MAX]  = { 0 };
+    // frequencies[x] = {val: x, freq: <frequency>}
+    freq_node frequencies[ASCII_MAX] = { 0 };
 
     get_paths(argc, argv, &input_path, &output_path);
 
@@ -36,34 +42,108 @@ int main(int argc, char **argv)
         exit(1);
     } 
 
+    char ch;
+
     // determine character frequencies
     do {
-     ch = fgetc(input);
-     frequencies[ch]++;            
+        ch = fgetc(input);
+        frequencies[ch].val = ch;
+        frequencies[ch].freq++;
     } while (ch != EOF);
+    
+    int count = 0;
 
-    for (int i = 0; i < 128; i++) {
-        printf("%c: %d\n", i, frequencies[i]);
+    // move characters with non-zero frequency to the front of the array
+    for (int i = 0; i < ASCII_MAX; i++) {
+        if (frequencies[i].freq != 0) {
+            frequencies[count++] = frequencies[i];
+        }
     }
 
-    // sort characters by ascending frequency
-    pq_node *freq_pq_head = freq_sort(frequencies, ASCII_MAX);
+    // any elements past this index are to be ignored
+    // this is treated as the new array size
+    int number_of_unique_characters = count;
+    
+    freq_node* head = NULL;
 
-    // TODO:
-    // 1. build frequency PQ
-    // 2. build tree using the PQ
-    // 3. encode string using tree
+    for (int i = 0; i < number_of_unique_characters; i++) {
+        head = pq_push(head, &frequencies[i]);
+    }
 
-    // cleanup
-    free(input_path);
-    free(output_path);
+    freq_node *curr = head;
+    freq_node *temp;
+
+    // while (curr != NULL) {
+    //     pq_pop(&curr, &temp);
+    //     printf("%c: %d\n", temp->val, temp->freq);
+    // }
+
+    printf("%p, %p\n", input_path, output_path);
+    printf("%s, %s\n", input_path, output_path);
+    // // cleanup
+    // free(input_path);
+    // free(output_path);
 
     return 0;
 }
 
-// sort the frequencies array and save the relevant character in
-pq_node* freq_sort(int *freq, int size) {
-    pq_node freq_pq[ASCII_MAX] = { 0 };
+void pq_pop(freq_node** head, freq_node** pop) {
+    *pop = *head;
+
+    *head = (*head)->next;
+
+    if ((*head) != NULL) {
+
+        (*head)->prev = NULL;
+    }
+
+    (*pop)->next = NULL;
+}
+
+// insert a new node at the correct position based on frequency
+freq_node* pq_push(freq_node* head, freq_node* new_node) {
+    freq_node* current_node = head;
+
+    // if the pq is empty, set head as new_node
+    if (current_node == NULL) {
+        return new_node;
+    // if the new_node should be inserted before the current head
+    } else if (new_node->freq < current_node->freq) {
+        new_node->next = current_node;
+        new_node->prev = NULL;
+        
+        current_node->prev = new_node;
+
+        return new_node;
+    } else {
+        // iterating up to the insertion point
+        while (current_node->next != NULL && current_node->next->freq < new_node->freq) {
+            current_node = current_node->next;
+        }
+
+        // if new_node is to be inserted at the end of the pq
+        if (current_node== NULL) {
+            current_node->next = new_node;
+            new_node->prev = current_node;
+            new_node->next = NULL;
+        } else {
+            new_node->prev = current_node;
+            new_node->next = current_node->next;
+
+            current_node->next = new_node;
+
+            if (new_node->next != NULL) {
+                new_node->next->prev = new_node;
+            }
+        }
+    }
+
+    return head;
+}
+
+// a comparison function comparing the frequencies of 2 pq nodes
+int cmp_freq_nodes(const void* a, const void* b) {
+    return ((freq_node*)a)->freq - ((freq_node*)b)->freq;
 }
 
 // process the command line options (or fall back to default values):
@@ -98,6 +178,7 @@ void get_paths(int argc, char **argv, char **input_path, char **output_path) {
     if (*output_path == NULL) {
         save_arg(output_path, DEFAULT_OUT);
     }
+    printf("%p, %p\n", *input_path, *output_path);
 }
 
 // helper function for allocating memory for strings
