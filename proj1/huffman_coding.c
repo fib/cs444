@@ -68,51 +68,50 @@ int main(int argc, char **argv)
 
     freq_node* head = NULL;
 
-    // // push all frequencies into pq
-    // for (int i = 0; i < ASCII_MAX; i++) {
-    //     printf("%d\n", i);
-    //     if (frequencies[i]->val != 0) head = pq_push(head, frequencies[i]);
-    // }
+    // push all frequencies into pq
+    for (int i = 0; i < ASCII_MAX; i++) {
+        // if (frequencies[i]) printf("%c\n", frequencies[i]->val);
+        if (frequencies[i]) head = pq_push(head, frequencies[i]);
+    }
 
-    // freq_node *curr = head;
-    // freq_node *temp;
+    freq_node *curr = head;
+    freq_node *temp;
 
-    // while (curr != NULL) {
-    //     printf("%c: %d\n", curr->val, curr->freq);
-    //     curr = curr->next;
-    // }
+    while (curr != NULL) {
+        printf("%c: %d\n", curr->val, curr->freq);
+        curr = curr->next;
+    }
 
-    // // build tree
-    // freq_node *current = head;
-    // freq_node *left, *right;
+    // build tree
+    freq_node *current = head;
+    freq_node *left, *right;
 
-    // while (current->next != NULL) {
-    //     // pop first two elements
-    //     pq_pop(&current, &left);
-    //     pq_pop(&current, &right);
+    while (current->next != NULL) {
+        // pop first two elements
+        pq_pop(&current, &left);
+        pq_pop(&current, &right);
 
-    //     printf("left: %c (%d), right: %c (%d)\n", left->val, left->freq, right->val, right->freq);
+        printf("left: %c (%d), right: %c (%d)\n", left->val, left->freq, right->val, right->freq);
 
-    //     // create internal node
-    //     freq_node *internal_node = pq_create_node(0);
-    //     internal_node->freq = left->freq + right->freq;
+        // create internal node
+        freq_node *internal_node = pq_create_node('$');
+        internal_node->freq = left->freq + right->freq;
 
-    //     internal_node->left = left;
-    //     internal_node->right = right;
+        internal_node->left = left;
+        internal_node->right = right;
         
-    //     left->parent = internal_node;
-    //     right->parent = internal_node;
+        left->parent = internal_node;
+        right->parent = internal_node;
 
-    //     printf("new node: %c (%d)\n\n", internal_node->val, internal_node->freq);
+        printf("new node: %c (%d)\n\n", internal_node->val, internal_node->freq);
 
-    //     current = pq_push(current, internal_node);
-    // }
+        current = pq_push(current, internal_node);
+    }
 
     // for (int i = 0; i < ASCII_MAX;)
 
     for (int i = 0; i < ASCII_MAX; i++) {
         if (frequencies[i] != NULL) {
-            printf("freeing %c\n", frequencies[i]->val);
             free(frequencies[i]);
         }
     }
