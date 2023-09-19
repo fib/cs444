@@ -11,13 +11,11 @@
 struct freq_node {
     char val;
     int freq;
-    struct freq_node* prev;
-    struct freq_node* next;
-    struct freq_node* left; 
-    struct freq_node* right; 
-    struct freq_node* parent;
+    struct freq_node *prev, *next;
+    struct freq_node *parent, *left, *right; 
 } typedef freq_node;
 
+freq_node* pq_create_node(int val);
 void pq_pop(freq_node** head, freq_node** pop);
 freq_node* pq_push(freq_node* head, freq_node* new_node);
 int cmp_freq_nodes(const void* a, const void* b);
@@ -30,7 +28,7 @@ int main(int argc, char **argv)
     char input_path[128] = { 0 }, output_path[128] = { 0 };
 
     // frequencies[x] = {val: x, freq: <frequency>}
-    freq_node frequencies[ASCII_MAX] = { 0 };
+    freq_node *frequencies[ASCII_MAX] = { 0 };
 
     get_paths(argc, argv, input_path, output_path);
 
@@ -44,29 +42,95 @@ int main(int argc, char **argv)
 
     char ch;
 
+    // printf("%lu\n", sizeof(freq_node));
+
+    // frequencies['a'] = pq_create_node('a');
+    // freq_node *head = NULL;
+
+    // printf("%c: %d\n", frequencies['a']->val, frequencies['a']->freq);
+
+    // head = pq_push(head, frequencies['a']);
+
+    // printf("%c: %d\n", head->val, head->freq);
+
     // determine character frequencies
     do {
         ch = fgetc(input);
-        frequencies[ch].val = ch;
-        frequencies[ch].freq++;
+
+        if (frequencies[ch] == NULL) {
+            frequencies[ch] = pq_create_node(ch); 
+        }
+        
+        frequencies[ch]->freq++;
     } while (ch != EOF);
+
+    fclose(input);
 
     freq_node* head = NULL;
 
-    // push all frequencies into pq
+    // // push all frequencies into pq
+    // for (int i = 0; i < ASCII_MAX; i++) {
+    //     printf("%d\n", i);
+    //     if (frequencies[i]->val != 0) head = pq_push(head, frequencies[i]);
+    // }
+
+    // freq_node *curr = head;
+    // freq_node *temp;
+
+    // while (curr != NULL) {
+    //     printf("%c: %d\n", curr->val, curr->freq);
+    //     curr = curr->next;
+    // }
+
+    // // build tree
+    // freq_node *current = head;
+    // freq_node *left, *right;
+
+    // while (current->next != NULL) {
+    //     // pop first two elements
+    //     pq_pop(&current, &left);
+    //     pq_pop(&current, &right);
+
+    //     printf("left: %c (%d), right: %c (%d)\n", left->val, left->freq, right->val, right->freq);
+
+    //     // create internal node
+    //     freq_node *internal_node = pq_create_node(0);
+    //     internal_node->freq = left->freq + right->freq;
+
+    //     internal_node->left = left;
+    //     internal_node->right = right;
+        
+    //     left->parent = internal_node;
+    //     right->parent = internal_node;
+
+    //     printf("new node: %c (%d)\n\n", internal_node->val, internal_node->freq);
+
+    //     current = pq_push(current, internal_node);
+    // }
+
+    // for (int i = 0; i < ASCII_MAX;)
+
     for (int i = 0; i < ASCII_MAX; i++) {
-        if (frequencies[i].val != 0) head = pq_push(head, &frequencies[i]);
+        if (frequencies[i] != NULL) {
+            printf("freeing %c\n", frequencies[i]->val);
+            free(frequencies[i]);
+        }
     }
 
-    freq_node *curr = head;
-    freq_node *temp;
-
-    while (curr != NULL) {
-        pq_pop(&curr, &temp);
-        printf("%c: %d\n", temp->val, temp->freq);
-    }
 
     return 0;
+}
+
+// helper function for allocating a new node
+freq_node* pq_create_node(int val) {
+    freq_node* new_node = malloc(sizeof(freq_node));
+
+    new_node->val = val;
+    new_node->freq = 0;
+    new_node->prev = new_node->next = NULL;
+    new_node->left = new_node->right = new_node->parent = NULL;
+
+    return new_node;
 }
 
 void pq_pop(freq_node** head, freq_node** pop) {
