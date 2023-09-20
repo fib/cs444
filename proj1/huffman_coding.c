@@ -15,6 +15,7 @@ struct freq_node {
     struct freq_node *parent, *left, *right; 
 } typedef freq_node;
 
+void printHCodes(freq_node *root, int arr[], long *buff, int top);
 freq_node* pq_create_node(int val);
 void pq_pop(freq_node** head, freq_node** pop);
 freq_node* pq_push(freq_node* head, freq_node* new_node);
@@ -42,17 +43,6 @@ int main(int argc, char **argv)
 
     char ch;
 
-    // printf("%lu\n", sizeof(freq_node));
-
-    // frequencies['a'] = pq_create_node('a');
-    // freq_node *head = NULL;
-
-    // printf("%c: %d\n", frequencies['a']->val, frequencies['a']->freq);
-
-    // head = pq_push(head, frequencies['a']);
-
-    // printf("%c: %d\n", head->val, head->freq);
-
     // determine character frequencies
     do {
         ch = fgetc(input);
@@ -68,57 +58,82 @@ int main(int argc, char **argv)
 
     freq_node* head = NULL;
 
-    // // push all frequencies into pq
-    // for (int i = 0; i < ASCII_MAX; i++) {
-    //     printf("%d\n", i);
-    //     if (frequencies[i]->val != 0) head = pq_push(head, frequencies[i]);
-    // }
+    // push all frequencies into pq
+    for (int i = 0; i < ASCII_MAX; i++) {
+        if (frequencies[i]) head = pq_push(head, frequencies[i]);
+    }
 
-    // freq_node *curr = head;
-    // freq_node *temp;
+    freq_node *curr = head;
+    freq_node *temp;
 
-    // while (curr != NULL) {
-    //     printf("%c: %d\n", curr->val, curr->freq);
-    //     curr = curr->next;
-    // }
+    while (curr != NULL) {
+        printf("%c: %d\n", curr->val, curr->freq);
+        curr = curr->next;
+    }
 
-    // // build tree
-    // freq_node *current = head;
-    // freq_node *left, *right;
+    // build tree
+    freq_node *current = head;
+    freq_node *left, *right;
 
-    // while (current->next != NULL) {
-    //     // pop first two elements
-    //     pq_pop(&current, &left);
-    //     pq_pop(&current, &right);
+    while (current->next != NULL) {
+        // pop first two elements
+        pq_pop(&current, &left);
+        pq_pop(&current, &right);
 
-    //     printf("left: %c (%d), right: %c (%d)\n", left->val, left->freq, right->val, right->freq);
+        // printf("left: %c (%d), right: %c (%d)\n", left->val, left->freq, right->val, right->freq);
 
-    //     // create internal node
-    //     freq_node *internal_node = pq_create_node(0);
-    //     internal_node->freq = left->freq + right->freq;
+        // create internal node
+        freq_node *internal_node = pq_create_node('$');
+        internal_node->freq = left->freq + right->freq;
 
-    //     internal_node->left = left;
-    //     internal_node->right = right;
+        internal_node->left = left;
+        internal_node->right = right;
         
-    //     left->parent = internal_node;
-    //     right->parent = internal_node;
+        left->parent = internal_node;
+        right->parent = internal_node;
 
-    //     printf("new node: %c (%d)\n\n", internal_node->val, internal_node->freq);
+        // printf("new node: %c (%d)\n\n", internal_node->val, internal_node->freq);
 
-    //     current = pq_push(current, internal_node);
-    // }
+        current = pq_push(current, internal_node);
+    }
 
-    // for (int i = 0; i < ASCII_MAX;)
+    int arr[ASCII_MAX] = {0};
+    long buff = 0;
+    printHCodes(current, arr, &buff, 0);
 
     for (int i = 0; i < ASCII_MAX; i++) {
         if (frequencies[i] != NULL) {
-            printf("freeing %c\n", frequencies[i]->val);
             free(frequencies[i]);
         }
     }
 
 
     return 0;
+}
+
+// Print the array
+void printArray(int arr[], int n) {
+  int i;
+  for (i = 0; i < n; ++i)
+    printf("%d", arr[i]);
+}
+
+void printHCodes(freq_node *root, int arr[], long *buff, int top) {
+  if (root->left) {
+    arr[top] = 0;
+    *buff &= ~(1 << top);
+    printHCodes(root->left, arr, buff, top + 1);
+  }
+  if (root->right) {
+    arr[top] = 1;
+    *buff &= (1 << top);
+    printHCodes(root->right, arr, buff, top + 1);
+  }
+  if (!(root->left) && !(root->right)) {
+    printf("%c\t|\t", root->val);
+    printArray(arr, top);
+    printf("\t\t\t| %ld\n", *buff);
+  }
 }
 
 // helper function for allocating a new node
