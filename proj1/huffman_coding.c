@@ -60,10 +60,7 @@ int main(int argc, char **argv)
 
     // push all frequencies into pq
     for (int i = 0; i < ASCII_MAX; i++) {
-<<<<<<< HEAD
-=======
         // if (frequencies[i]) printf("%c\n", frequencies[i]->val);
->>>>>>> fe97440fb46cf1ede715595ef794cbc716333c6b
         if (frequencies[i]) head = pq_push(head, frequencies[i]);
     }
 
@@ -84,11 +81,7 @@ int main(int argc, char **argv)
         pq_pop(&current, &left);
         pq_pop(&current, &right);
 
-<<<<<<< HEAD
         // printf("left: %c (%d), right: %c (%d)\n", left->val, left->freq, right->val, right->freq);
-=======
-        printf("left: %c (%d), right: %c (%d)\n", left->val, left->freq, right->val, right->freq);
->>>>>>> fe97440fb46cf1ede715595ef794cbc716333c6b
 
         // create internal node
         freq_node *internal_node = pq_create_node('$');
@@ -100,11 +93,7 @@ int main(int argc, char **argv)
         left->parent = internal_node;
         right->parent = internal_node;
 
-<<<<<<< HEAD
         // printf("new node: %c (%d)\n\n", internal_node->val, internal_node->freq);
-=======
-        printf("new node: %c (%d)\n\n", internal_node->val, internal_node->freq);
->>>>>>> fe97440fb46cf1ede715595ef794cbc716333c6b
 
         current = pq_push(current, internal_node);
     }
