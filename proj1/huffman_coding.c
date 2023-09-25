@@ -41,17 +41,24 @@ int main(int argc, char **argv)
         exit(1);
     } 
 
+    for (int i = 0; i < ASCII_MAX; i++) {
+        frequencies[i] = pq_create_node(0);
+    }
+
     char ch;
 
     // determine character frequencies
     do {
         ch = fgetc(input);
 
-        if (frequencies[ch] == NULL) {
-            frequencies[ch] = pq_create_node(ch); 
+        if (ch != EOF) {
+        if (frequencies[ch]->val == 0) {
+            printf("%c\n", ch);
+            frequencies[ch]->val = ch; 
         }
         
         frequencies[ch]->freq++;
+        }
     } while (ch != EOF);
 
     fclose(input);
@@ -130,8 +137,8 @@ void printHCodes(freq_node *root, int arr[], long *buff, int top) {
     *buff &= (1 << top);
     printHCodes(root->right, arr, buff, top + 1);
   }
-  if (!(root->left) && !(root->right)) {
-    printf("%c\t|\t", root->val);
+  if (!(root->left) && !(root->right) && root->val != 0) {
+    printf("%c (%d)\t|\t", root->val, root->val);
     printArray(arr, top);
     printf("\t\t\t| %ld\n", *buff);
   }
