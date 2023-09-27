@@ -48,18 +48,14 @@ int main(int argc, char **argv)
     char ch;
 
     // determine character frequencies
-    do {
-        ch = fgetc(input);
-
-        if (ch != EOF) {
+    while ((ch = fgetc(input)) != EOF) {
         if (frequencies[ch]->val == 0) {
             printf("%c\n", ch);
             frequencies[ch]->val = ch; 
         }
         
         frequencies[ch]->freq++;
-        }
-    } while (ch != EOF);
+    }
 
     fclose(input);
 
