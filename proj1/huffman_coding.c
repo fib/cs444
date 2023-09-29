@@ -9,19 +9,20 @@
 #define ASCII_MAX 128
 
 struct freq_node {
-    char val;
+    unsigned char val;
     int freq;
     struct freq_node *prev, *next;
     struct freq_node *parent, *left, *right; 
 } typedef freq_node;
 
-void printHCodes(freq_node *root, int arr[], long *buff, int top);
+void getHuffmanCodes(freq_node *root, unsigned int buff, int depth, unsigned int codes[], int code_lengths[]);
 freq_node* pq_create_node(int val);
 void pq_pop(freq_node** head, freq_node** pop);
 freq_node* pq_push(freq_node* head, freq_node* new_node);
 int cmp_freq_nodes(const void* a, const void* b);
 void get_paths(int argc, char **argv, char *input_path, char *output_path);
 void save_arg(char *dest, char *src);
+void printBin(unsigned int val, int size);
 
 
 int main(int argc, char **argv)
@@ -50,7 +51,6 @@ int main(int argc, char **argv)
     // determine character frequencies
     while ((ch = fgetc(input)) != EOF) {
         if (frequencies[ch]->val == 0) {
-            printf("%c\n", ch);
             frequencies[ch]->val = ch; 
         }
         
@@ -70,7 +70,6 @@ int main(int argc, char **argv)
     freq_node *temp;
 
     while (curr != NULL) {
-        printf("%c: %d\n", curr->val, curr->freq);
         curr = curr->next;
     }
 
@@ -96,9 +95,23 @@ int main(int argc, char **argv)
         current = pq_push(current, internal_node);
     }
 
-    int arr[ASCII_MAX] = {0};
-    long buff = 0;
-    printHCodes(current, arr, &buff, 0);
+    int code_lengths[ASCII_MAX] = {0};
+    unsigned int codes[ASCII_MAX] = {0};
+    unsigned int buff = 0;
+    
+    getHuffmanCodes(current, buff, 0, codes, code_lengths);
+
+    current = head;
+    char c;
+
+    printf("%-8s %-8s %-8s %s\n", "ascii", "freq", "codelen", "code");
+    for (int i = 0; i < ASCII_MAX; i++) {
+        if ( (c = frequencies[i]->val) != 0) {
+            printf("%-8c %-8d %-8u ", c, frequencies[i]->freq, code_lengths[c]);
+            printBin(codes[c], code_lengths[c]);
+            printf("\n");
+        }
+    }
 
     for (int i = 0; i < ASCII_MAX; i++) {
         if (frequencies[i] != NULL) {
@@ -106,33 +119,29 @@ int main(int argc, char **argv)
         }
     }
 
-
     return 0;
 }
 
-// Print the array
-void printArray(int arr[], int n) {
-  int i;
-  for (i = 0; i < n; ++i)
-    printf("%d", arr[i]);
+// helper for printing binary values
+void printBin(unsigned int val, int size) {
+    for (int i = 0; i < size; i++) {
+        printf("%u", (val >> (size - i)) & 1);
+    }
 }
 
-void printHCodes(freq_node *root, int arr[], long *buff, int top) {
-  if (root->left) {
-    arr[top] = 0;
-    *buff &= ~(1 << top);
-    printHCodes(root->left, arr, buff, top + 1);
-  }
-  if (root->right) {
-    arr[top] = 1;
-    *buff &= (1 << top);
-    printHCodes(root->right, arr, buff, top + 1);
-  }
-  if (!(root->left) && !(root->right) && root->val != 0) {
-    printf("%c (%d)\t|\t", root->val, root->val);
-    printArray(arr, top);
-    printf("\t\t\t| %ld\n", *buff);
-  }
+// traverse the tree to generate a code for each character
+void getHuffmanCodes(freq_node *root, unsigned int buff, int depth, unsigned int codes[], int code_lengths[]) {
+    if (root == NULL || root->val == 0) return;
+
+    if (root->left == NULL && root->right == NULL) {
+        codes[root->val] = buff;
+        code_lengths[root->val] = depth - 1;
+    }
+
+    depth++;
+
+    getHuffmanCodes(root->left, (buff << 1) | 1,  depth, codes, code_lengths);
+    getHuffmanCodes(root->right, (buff << 1),  depth, codes, code_lengths);
 }
 
 // helper function for allocating a new node
@@ -147,6 +156,7 @@ freq_node* pq_create_node(int val) {
     return new_node;
 }
 
+// pops out the first (minimum) node, saving it to `pop`
 void pq_pop(freq_node** head, freq_node** pop) {
     *pop = *head;
 
