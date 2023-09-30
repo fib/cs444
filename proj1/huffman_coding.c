@@ -84,8 +84,6 @@ int main(int argc, char **argv)
         pq_pop(&current, &left);
         pq_pop(&current, &right);
 
-        printf("popped: %c (%u), %c (%u)\n", left->val, left->val, right->val, right->val);
-
         // create internal node
         freq_node *internal_node = pq_create_node('$');
         internal_node->freq = left->freq + right->freq;
