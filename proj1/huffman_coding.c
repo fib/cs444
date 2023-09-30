@@ -15,13 +15,12 @@ struct freq_node {
     struct freq_node *parent, *left, *right; 
 } typedef freq_node;
 
+FILE *get_file(char path[], char mode[]);
 void getHuffmanCodes(freq_node *root, unsigned int buff, int depth, unsigned int codes[], int code_lengths[]);
 freq_node* pq_create_node(int val);
 void pq_pop(freq_node** head, freq_node** pop);
 freq_node* pq_push(freq_node* head, freq_node* new_node);
-int cmp_freq_nodes(const void* a, const void* b);
 void get_paths(int argc, char **argv, char *input_path, char *output_path);
-void save_arg(char *dest, char *src);
 void printBin(unsigned int val, int size);
 
 
@@ -34,13 +33,7 @@ int main(int argc, char **argv)
 
     get_paths(argc, argv, input_path, output_path);
 
-    FILE *input = fopen(input_path, "r");
-
-    // exit if input is invalid
-    if (input == NULL) {
-        printf("failed to open file: %s\n", input_path);
-        exit(1);
-    } 
+    FILE *input = get_file(input_path, "r");
 
     for (int i = 0; i < ASCII_MAX; i++) {
         frequencies[i] = pq_create_node(0);
@@ -106,6 +99,7 @@ int main(int argc, char **argv)
     current = head;
     char c;
 
+    // print codes (debug)
     printf("%-8s %-8s %-8s %s\n", "ascii", "freq", "codelen", "code");
     for (int i = 0; i < ASCII_MAX; i++) {
         if ( (c = frequencies[i]->val) != 0) {
@@ -115,6 +109,52 @@ int main(int argc, char **argv)
         }
     }
 
+    // encode file
+    input = get_file(input_path, "r");
+    FILE *output = get_file(output_path, "wb");
+
+    unsigned char byte_buffer = 0;
+    unsigned int current_code;
+
+    int buffer_index = 7;
+
+    // a flag for keeping track of whether the buffer has been written to the file
+    // this is needed to account for the last byte, which may not be written if it's
+    // not full 
+    int written = 0;
+
+    while ((ch = fgetc(input)) != EOF) {
+        written = 0;
+
+        // get current character code
+        current_code = codes[ch];
+
+        // pack a byte
+        for (int i = 1; i <= code_lengths[ch]; i++) {
+            // write bit to byte at `buffer_index`
+            byte_buffer |= (current_code >> (code_lengths[ch] - i) & 1) << buffer_index;
+
+            if (buffer_index == 0) {
+                // send byte to file
+                putc(byte_buffer, output);
+                written = 1;
+                buffer_index = 7;
+                byte_buffer = 0;
+                continue;
+            }
+
+            buffer_index--;
+        }
+    }
+
+    // if the last byte wasn't full it wasn't written
+    // so, write here
+    if (!written) putc(byte_buffer, output);
+
+    fclose(input);
+    fclose(output);
+
+    // liberate malloccels 
     for (int i = 0; i < ASCII_MAX; i++) {
         if (frequencies[i] != NULL) {
             free(frequencies[i]);
@@ -122,6 +162,18 @@ int main(int argc, char **argv)
     }
 
     return 0;
+}
+
+// help for accessing and validating files, exits on error
+FILE *get_file(char path[], char mode[]) {
+    FILE *file = fopen(path, mode);
+
+    if (file == NULL) {
+        printf("Failed to open file: %s\n", path);
+        exit(1);
+    }
+
+    return file;
 }
 
 // helper for printing binary values
