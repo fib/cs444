@@ -22,6 +22,7 @@ void pq_pop(freq_node** head, freq_node** pop);
 FILE *get_file(char path[], char mode[]);
 void get_paths(int argc, char **argv, char *input_path, char *output_path);
 void print_bin(unsigned int val, int size);
+void free_memory(freq_node *node);
 
 void generate_huffman_codes(freq_node *root, unsigned int buff, int depth, unsigned int codes[], int code_lengths[]);
 
@@ -54,15 +55,15 @@ int main(int argc, char **argv)
     fclose(input);
 
     // push all frequencies into pq
-    freq_node* head = NULL;
+    freq_node* pq_head = NULL;
     for (int i = 0; i < ASCII_MAX; i++) {
         if (frequencies[i] && frequencies[i]->val != 0) {
-            head = pq_push(head, frequencies[i]);
+            pq_head = pq_push(pq_head, frequencies[i]);
         }
     }
 
     // build tree out of pq
-    freq_node *current = head;
+    freq_node *current = pq_head;
     freq_node *left, *right;
 
     while (current->next != NULL) {
@@ -87,7 +88,9 @@ int main(int argc, char **argv)
     
     generate_huffman_codes(current, buff, 0, codes, code_lengths);
 
-    current = head;
+    freq_node *tree_root = current;
+
+    current = pq_head;
 
     // print codes (debug)
     printf("%-8s %-8s %-8s %s\n", "ascii", "freq", "codelen", "code");
@@ -146,14 +149,22 @@ int main(int argc, char **argv)
     fclose(input);
     fclose(output);
 
-    // liberate malloccels 
-    for (int i = 0; i < ASCII_MAX; i++) {
-        if (frequencies[i] != NULL) {
-            free(frequencies[i]);
-        }
-    }
+    free_memory(tree_root);
 
     return 0;
+}
+
+// free all tree nodes
+void free_memory(freq_node *node) {
+    if (node == NULL) return;
+
+    if (node->left == NULL && node->right == NULL) {
+        free(node);
+        return;
+    }
+
+    free_memory(node->left);
+    free_memory(node->right);
 }
 
 // help for accessing and validating files, exits on error
