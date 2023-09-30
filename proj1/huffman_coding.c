@@ -190,6 +190,7 @@ void print_bin(unsigned int val, int size) {
 void generate_huffman_codes(freq_node *root, unsigned int buff, int depth, unsigned int codes[], int code_lengths[]) {
     if (root == NULL || root->val == 0) return;
 
+    // if a leaf node is reached, save the code and its length
     if (root->left == NULL && root->right == NULL) {
         codes[root->val] = buff;
         code_lengths[root->val] = depth;
@@ -204,7 +205,7 @@ void generate_huffman_codes(freq_node *root, unsigned int buff, int depth, unsig
     generate_huffman_codes(root->right, (buff << 1),  depth, codes, code_lengths);
 }
 
-// helper function for allocating a new node
+// helper function for allocating and initializing a new node
 freq_node* pq_create_node(int val) {
     freq_node* new_node = malloc(sizeof(freq_node));
 
@@ -230,14 +231,14 @@ void pq_pop(freq_node** head, freq_node** pop) {
     (*pop)->next = NULL;
 }
 
-// insert a new node at the correct position based on frequency
+// insert `new_node` at the correct position based on frequency
 freq_node* pq_push(freq_node* head, freq_node* new_node) {
     freq_node* current_node = head;
 
-    // if the pq is empty, set head as new_node
+    // if the pq is empty, set head to `new_node`
     if (current_node == NULL) {
         return new_node;
-    // if the new_node should be inserted before the current head
+    // if `new_node` should be inserted before the current head
     } else if (new_node->freq < current_node->freq) {
         new_node->next = current_node;
         new_node->prev = NULL;
@@ -251,7 +252,7 @@ freq_node* pq_push(freq_node* head, freq_node* new_node) {
             current_node = current_node->next;
         }
 
-        // if new_node is to be inserted at the end of the pq
+        // if `new_node` is to be inserted at the end of the pq
         if (current_node== NULL) {
             current_node->next = new_node;
             new_node->prev = current_node;
