@@ -63,7 +63,9 @@ int main(int argc, char **argv)
 
     // push all frequencies into pq
     for (int i = 0; i < ASCII_MAX; i++) {
-        if (frequencies[i]) head = pq_push(head, frequencies[i]);
+        if (frequencies[i] && frequencies[i]->val != 0) {
+            head = pq_push(head, frequencies[i]);
+        }
     }
 
     freq_node *curr = head;
@@ -81,6 +83,8 @@ int main(int argc, char **argv)
         // pop first two elements
         pq_pop(&current, &left);
         pq_pop(&current, &right);
+
+        printf("popped: %c (%u), %c (%u)\n", left->val, left->val, right->val, right->val);
 
         // create internal node
         freq_node *internal_node = pq_create_node('$');
@@ -124,7 +128,7 @@ int main(int argc, char **argv)
 
 // helper for printing binary values
 void printBin(unsigned int val, int size) {
-    for (int i = 0; i < size; i++) {
+    for (int i = 1; i <= size; i++) {
         printf("%u", (val >> (size - i)) & 1);
     }
 }
@@ -135,11 +139,14 @@ void getHuffmanCodes(freq_node *root, unsigned int buff, int depth, unsigned int
 
     if (root->left == NULL && root->right == NULL) {
         codes[root->val] = buff;
-        code_lengths[root->val] = depth - 1;
+        code_lengths[root->val] = depth;
+
+        return;
     }
 
     depth++;
 
+    // left = 1, right = 0
     getHuffmanCodes(root->left, (buff << 1) | 1,  depth, codes, code_lengths);
     getHuffmanCodes(root->right, (buff << 1),  depth, codes, code_lengths);
 }
