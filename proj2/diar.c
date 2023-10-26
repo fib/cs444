@@ -18,14 +18,14 @@ void get_args(int argc, char **argv, char *input_path, int *size);
 FILE *get_file(char path[], char mode[]);
 
 int main(int argc, char **argv) {
-    char input_path[128] = { 0 }, output_path[128] = { 0 };
+    char input_path[128] = { 0 }, output_path[256] = { 0 };
     int output_size = 0;
     FILE *output, *raid2[7];
 
     /* setup */
 
     get_args(argc, argv, input_path, &output_size);
-    sprintf(output_path, "%s.2", input_path);
+    sprintf(output_path, "%s.%s", input_path, "2");
 
     output = get_file(output_path, "w");
     init_raid2(raid2, input_path);
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 
 // initialize an array of 7 files representing 7 RAID 2 drives
 void init_raid2(FILE *raid2[7], char basename[128]) {
-    char output_path[128] = { 0 };
+    char output_path[256] = { 0 };
 
     for (int i = 0; i < 7; i++) {
         sprintf(output_path, "%s.part%d", basename, i);
