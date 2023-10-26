@@ -17,7 +17,6 @@ unsigned char encode_nibble(unsigned char nibble);
 void get_arg_paths(int argc, char **argv, char *input_path);
 FILE *get_file(char path[], char mode[]);
 
-
 int main(int argc, char **argv) {
     char ch, input_path[128] = { 0 };
     FILE *input, *raid2[7];
@@ -76,13 +75,10 @@ unsigned char encode_nibble(unsigned char nibble) {
     unsigned char encoded_nibble = 0;
     unsigned char d1 = nibble >> 3 & 1, d2 = nibble >> 2 & 1, d3 = nibble >> 1 & 1, d4 = nibble & 1;
 
-    encoded_nibble |= (d1 ^ d2 ^ d4) << 6;      // p1
-    encoded_nibble |= (d1 ^ d3 ^ d4) << 5;      // p2
-    encoded_nibble |= d1 << 4;                  // d1
-    encoded_nibble |= (d2 ^ d3 ^ d4) << 3;      // p3
-    encoded_nibble |= d2 << 2;                  // d2
-    encoded_nibble |= d3 << 1;                  // d3
-    encoded_nibble |= d4;                       // d4
+    // parity bits
+    encoded_nibble |= (d1 ^ d2 ^ d4) << 6 | (d1 ^ d3 ^ d4) << 5 | (d2 ^ d3 ^ d4) << 3; 
+    // data bits
+    encoded_nibble |= d1 << 4 | d2 << 2 | d3 << 1 | d4;
 
     return encoded_nibble;
 }
