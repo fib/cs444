@@ -17,7 +17,6 @@ unsigned char encode_nibble(unsigned char nibble);
 void get_args(int argc, char **argv, char *input_path, int *size);
 FILE *get_file(char path[], char mode[]);
 
-
 int main(int argc, char **argv) {
     char input_path[128] = { 0 }, output_path[128] = { 0 };
     int output_size = 0;
