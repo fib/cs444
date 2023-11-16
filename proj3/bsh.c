@@ -116,6 +116,12 @@ int main(int argc, char *argv[], char *envp[])
         } 
 
         strcpy(history[history_index], cmdLine);
+
+        for (int i = 1; cmdArg[i] != NULL; i++) {
+            strcat(history[history_index], " ");
+            strcat(history[history_index], cmdArg[i]);
+        }
+
         history_index = (history_index + 1) % HISTSIZE;
 
         // built-in command exit
