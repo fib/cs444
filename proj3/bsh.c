@@ -123,6 +123,13 @@ int main(int argc, char *argv[], char *envp[])
         {
             if (debug)
                 printf("exiting\n");
+
+            
+            for (int i = 0; envKeys[i] != NULL; i++) {
+                free(envKeys[i]);
+                free(envVals[i]);
+            }
+
             break;
         }
         // built-in command env
