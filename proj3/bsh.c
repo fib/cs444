@@ -57,7 +57,7 @@ int main(int argc, char *argv[], char *envp[])
     int status, i, debug;
     pid_t pid;
 
-    memset(history, 0, HISTSIZE * MAXLINE);
+    memset(history, 0, sizeof(char) * HISTSIZE * MAXLINE);
 
     debug = 0;
     i = 1;
@@ -131,7 +131,7 @@ int main(int argc, char *argv[], char *envp[])
                 printf("exiting\n");
 
             
-            for (int i = 0; envKeys[i] != NULL; i++) {
+            for (int i = 0; envKeys[i] != NULL && envVals[i] != NULL; i++) {
                 free(envKeys[i]);
                 free(envVals[i]);
             }
@@ -180,6 +180,8 @@ int main(int argc, char *argv[], char *envp[])
             if (envKeys[i] != NULL) {
                 free(envKeys[i]);
                 free(envVals[i]);
+                envKeys[i] = NULL;
+                envVals[i] = NULL;
             }
 
             for (i; envKeys[i+2] != NULL; i++) {
