@@ -131,10 +131,10 @@ int main(int argc, char *argv[], char *envp[])
                 printf("exiting\n");
 
             
-            for (int i = 0; envKeys[i] != NULL && envVals[i] != NULL; i++) {
-                free(envKeys[i]);
-                free(envVals[i]);
-            }
+            // for (int i = 0; envKeys[i] != NULL && envVals[i] != NULL; i++) {
+            //     free(envKeys[i]);
+            //     free(envVals[i]);
+            // }
 
             break;
         }
