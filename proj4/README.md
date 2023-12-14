@@ -1,7 +1,7 @@
 **Producer:**
 - Loop:
     1. acquire queue mutex
-    2. generate customer
+    2. insert customer
     3. signal if queue length went 0 -> 1
     4. release queue mutex
 

@@ -7,14 +7,20 @@
 #include <pthread.h>
 
 #include "queue.c"
+#include <linux/time.h>
 
 void avgAndStdDev(double *x, double *avg, double *stddev, int size);
-double stdev(double *x, int size);
 
-pthread_cond_t server_signal_cond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t customer_signal = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t server_signal_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int q_not_empty = 0;
+
+struct queue_stats {
+    double x_sum;
+    double x2_sum;
+    int size;
+};
 
 struct customer_generator_args {
     double lambda;
@@ -34,8 +40,10 @@ struct server_args {
 
 struct observer_args {
     int *queue_lengths;
-    int *arrival_mean;
+    struct queue_stats *q_stats;
 };
+
+
 
 double rnd_exp(struct drand48_data *randData, double lambda) {
     double tmp;
@@ -93,6 +101,10 @@ void *customer_generator(void *cg_args) {
         prev_q_length = qLength;
 
         enqueue(new_customer);
+
+        if (prev_q_length == 0) {
+            pthread_cond_signal(&customer_signal);
+        }
         
         pthread_mutex_unlock(&qMutex);
         i++;
@@ -142,6 +154,7 @@ void *server(void *s_args) {
 void *observer(void *o_args) {
     struct observer_args *args = o_args;
     int *queue_lengths = args->queue_lengths;
+    struct queue_stats *q_stats = args->q_stats;
 
     double time = 0.005;
     customer *c;
@@ -152,6 +165,10 @@ void *observer(void *o_args) {
         if (qLength != prev_len)  {
             prev_len = qLength;
         }
+
+        q_stats->x_sum += qLength;
+        q_stats->x2_sum += qLength * qLength;
+        q_stats->size++;
 
         printf("\33[2K\r");
         printf("%d", qLength);
@@ -206,13 +223,15 @@ int main(int argc, char **argv)
     double *service_times = (double*)malloc(num_customer * sizeof(double));
     int *queue_lengths = (int*)malloc(num_customer * sizeof(int));
 
+    struct queue_stats q_stats = {0};
+
     memset(arrival_times, 0, num_customer);
     memset(wait_times, 0, num_customer);
     memset(service_times, 0, num_customer);
 
     struct customer_generator_args cg_args = {lambda, num_customer, arrival_times};
     struct server_args server_args = {mu, num_customer, service_times, wait_times};
-    struct observer_args observer_args = {queue_lengths};
+    struct observer_args observer_args = {queue_lengths, &q_stats};
 
     pthread_create(&server_thread, NULL, server, (void*) &server_args);
     pthread_create(&observer_thread, NULL, observer, (void*) &observer_args);
@@ -236,6 +255,10 @@ int main(int argc, char **argv)
 
     avgAndStdDev(service_times, &avg, &stddev, num_customer);
     printf("%-25s %-15f %f\n", "service time", avg, stddev);
+
+    avg = q_stats.x_sum / q_stats.size;
+    stddev = sqrt((q_stats.x2_sum - avg * avg * q_stats.size) / (q_stats.size - 1));
+    printf("%-25s %-15f %f\n", "queue length", q_stats.x_sum/q_stats.size, stddev);
 
     double total_service_time = 0;
     for (int i = 0; i < num_customer; i++) total_service_time += service_times[i];
