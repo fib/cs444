@@ -1,3 +1,5 @@
+/* a thread-safe customer queue */
+
 typedef struct customer customer;
 struct customer {
     struct timeval arrival_time;
@@ -5,37 +7,50 @@ struct customer {
     customer *prev;
 };
 
-customer *qHead, *qTail;
-unsigned qLength;
-pthread_mutex_t qMutex = PTHREAD_MUTEX_INITIALIZER;
+customer *q_head, *q_tail;
+unsigned q_length;
+pthread_mutex_t q_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t q_cond_nonempty = PTHREAD_COND_INITIALIZER;
 
+/* thread safe enqueue */
 void enqueue(customer *c) {
-    if (qLength == 0) {
-        qHead = c;
-        qTail = c;
+    pthread_mutex_lock(&q_mutex);
+
+    if (q_length == 0) {
+        q_head = c;
+        q_tail = c;
+
+        pthread_cond_signal(&q_cond_nonempty);
     } else {
-        c->next = qTail;
+        c->next = q_tail;
         c->next->prev = c;
-        qTail = c;
-        qTail->prev = NULL;
+        q_tail = c;
+        q_tail->prev = NULL;
     }
 
-    qLength++;
+    q_length++;
+
+    pthread_mutex_unlock(&q_mutex);
 }
 
+/* thread safe dequeue */
 customer *dequeue() {
+    pthread_mutex_lock(&q_mutex);
+
     customer *ret;
     
-    if (qLength == 0) {
-        printf("Error: can't dequeue from empty queue\n");
-        exit(1);
+    /* if the queue is empty, wait for a signal from enqueue */
+    while (q_length == 0) {
+        pthread_cond_wait(&q_cond_nonempty, &q_mutex);
     }
 
-    ret = qHead;
-    qHead = qHead->prev;
-    if (qHead) qHead->next = NULL;
+    ret = q_head;
+    q_head = q_head->prev;
+    if (q_head) q_head->next = NULL;
 
-    qLength--;
+    q_length--;
+
+    pthread_mutex_unlock(&q_mutex);
 
     return ret;
 }

@@ -7,12 +7,9 @@
 #include <pthread.h>
 
 #include "queue.c"
-#include <linux/time.h>
 
-void avgAndStdDev(double *x, double *avg, double *stddev, int size);
-
-pthread_cond_t customer_signal = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t server_signal_mutex = PTHREAD_MUTEX_INITIALIZER;
+double rnd_exp(struct drand48_data *randData, double lambda);
+void avg_stddev(double *x, double *avg, double *stddev, int size);
 
 int q_not_empty = 0;
 
@@ -43,16 +40,6 @@ struct observer_args {
     struct queue_stats *q_stats;
 };
 
-
-
-double rnd_exp(struct drand48_data *randData, double lambda) {
-    double tmp;
-
-    drand48_r(randData, &tmp);
-
-    return -log(1.0 - tmp) / lambda;
-}
-
 /* sleep for the given amount of time */
 void do_sleep(double time) {
     double x;
@@ -73,15 +60,14 @@ void *customer_generator(void *cg_args) {
 
     struct drand48_data randData;
     struct timeval tv;
-    double result;
 
     int prev_q_length;
+    
+    double time;
+    int i = 0;
 
     gettimeofday(&tv, NULL);
     srand48_r(tv.tv_sec + tv.tv_usec, &randData);
-
-    double time;
-    int i = 0;
 
     while (!customer_server_flag) {
         time = rnd_exp(&randData, lambda);
@@ -95,18 +81,8 @@ void *customer_generator(void *cg_args) {
         gettimeofday(&tv, NULL);
         new_customer->arrival_time = tv;
 
-
-        pthread_mutex_lock(&qMutex);
-
-        prev_q_length = qLength;
-
         enqueue(new_customer);
-
-        if (prev_q_length == 0) {
-            pthread_cond_signal(&customer_signal);
-        }
         
-        pthread_mutex_unlock(&qMutex);
         i++;
     }
 }
@@ -127,16 +103,7 @@ void *server(void *s_args) {
     srand48_r(tv.tv_sec + tv.tv_usec, &randData);
 
     for (int i = 0; i < num_customer; i++) {
-        // instead of using signals, we simply wait until the queue is not empty
-        while (qLength == 0) {
-            continue;
-        }
-
-        pthread_mutex_lock(&qMutex);
-
         c = dequeue();
-
-        pthread_mutex_unlock(&qMutex);
 
         gettimeofday(&tv, NULL);
 
@@ -162,16 +129,16 @@ void *observer(void *o_args) {
 
     
     while (!customer_server_flag) {
-        if (qLength != prev_len)  {
-            prev_len = qLength;
+        if (q_length != prev_len)  {
+            prev_len = q_length;
         }
 
-        q_stats->x_sum += qLength;
-        q_stats->x2_sum += qLength * qLength;
+        q_stats->x_sum += q_length;
+        q_stats->x2_sum += q_length * q_length;
         q_stats->size++;
 
         printf("\33[2K\r");
-        printf("%d", qLength);
+        printf("Queue length: %d", q_length);
         fflush(stdout);
 
         do_sleep(time);
@@ -185,12 +152,10 @@ int main(int argc, char **argv)
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
-
     double lambda = 5.0, mu = 7.0;
     int num_server = 1;
     num_customer = 1000;
     int c;
-
 
     pthread_t customer_generator_thread, server_thread, observer_thread;
 
@@ -216,8 +181,8 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    printf("lambda %.1f, mu %.1f, num customer %d, num server %d\n", lambda, mu, num_customer, num_server);
 
+    /* arrays for collecting statistics */
     double *arrival_times = (double*)malloc(num_customer * sizeof(double));
     double *wait_times = (double*)malloc(num_customer * sizeof(double));
     double *service_times = (double*)malloc(num_customer * sizeof(double));
@@ -229,14 +194,19 @@ int main(int argc, char **argv)
     memset(wait_times, 0, num_customer);
     memset(service_times, 0, num_customer);
 
+    /* define threads */
     struct customer_generator_args cg_args = {lambda, num_customer, arrival_times};
     struct server_args server_args = {mu, num_customer, service_times, wait_times};
     struct observer_args observer_args = {queue_lengths, &q_stats};
 
+    printf("lambda %.1f, mu %.1f, num customer %d, num server %d\n", lambda, mu, num_customer, num_server);
+
+    /* start threads */
     pthread_create(&server_thread, NULL, server, (void*) &server_args);
     pthread_create(&observer_thread, NULL, observer, (void*) &observer_args);
     pthread_create(&customer_generator_thread, NULL, customer_generator, (void*) &cg_args);
 
+    /* the server thread signals to the rest when to stop */
     pthread_join(server_thread, NULL);
 
     clock_gettime(CLOCK_MONOTONIC, &finish);
@@ -247,13 +217,13 @@ int main(int argc, char **argv)
     printf("\n\nStatistics\n");
     printf("%25s %-15s %s\n", "", "average", "standard deviation");
 
-    avgAndStdDev(arrival_times, &avg, &stddev, num_customer);
+    avg_stddev(arrival_times, &avg, &stddev, num_customer);
     printf("%-25s %-15f %f\n", "inter-arrival time", avg, stddev);
 
-    avgAndStdDev(wait_times, &avg, &stddev, num_customer);
+    avg_stddev(wait_times, &avg, &stddev, num_customer);
     printf("%-25s %-15f %f\n", "customer waiting time", avg, stddev);
 
-    avgAndStdDev(service_times, &avg, &stddev, num_customer);
+    avg_stddev(service_times, &avg, &stddev, num_customer);
     printf("%-25s %-15f %f\n", "service time", avg, stddev);
 
     avg = q_stats.x_sum / q_stats.size;
@@ -268,7 +238,15 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void avgAndStdDev(double *x, double *avg, double *stddev, int size) {
+double rnd_exp(struct drand48_data *randData, double lambda) {
+    double tmp;
+
+    drand48_r(randData, &tmp);
+
+    return -log(1.0 - tmp) / lambda;
+}
+
+void avg_stddev(double *x, double *avg, double *stddev, int size) {
     double total = 0;
     *avg = *stddev = 0;
     
