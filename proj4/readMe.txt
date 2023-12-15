@@ -17,3 +17,6 @@ of the queue in a thread-safe way. This means both `enqueue` and `dequeue` acqui
 to modifying any data. Also, `enqueue` fires the `q_cond_nonempty` signal whenever a new customer
 is added to an empty queue--`dequeue` relies on this mechanism to wait for a new customer to arrive 
 when the queue is empty.
+
+Since all of the thread-safety is ensured inside of the queue API, the code for the threads is relatively
+simple, as it doesn't need to deal with acquiring the correct mutexes or firing the appropriate signals.
